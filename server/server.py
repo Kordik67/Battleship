@@ -2,35 +2,7 @@ import socket
 import time
 from threading import Thread
 import numpy as np
-
-class Player:
-    def __init__(self,ip):
-        self.name= "NoName"
-        self.ip = ip
-        
-class Game:
-    def __init__(self,player,x,y):
-        self.players = [player]
-        self.x_max = x
-        self.y_max = y
-        self.maps = np.zeros(shape = (2,x,y),dtype=bool)
-    def player_join(self,player):
-        self.players.append(player)
-        pass
-    def place_boat(self,player,co,vec,lenght):
-        player_id = self.players.index(player)
-        for i in range(lenght):
-            self.map[player_id, co[0] + i*vec[0],co[1] + i*vec[1]] = True
-    def shoot(self,player,co):
-        global serv
-        player_id = self.players.index(player)
-        opp_id = (~player_id) +2
-        
-        if map[opp_id,co[0],co[1]]: # CIBLE TOUCHE
-            serv.send(b"",self.players)
-        else: # COULER
-            serv.send(b"",self.players)
-            pass
+from BattleShipCore import *
 
 class Server(Thread):
 
@@ -61,7 +33,7 @@ class Server(Thread):
                     player = self.players[address[0]]
                     match message[0]:
                         case 0: # CREATE GAME
-                            g = Game(player,message[1],message[2])
+                            g = Game(player,message[1],message[2],self)
                             self.games[player.name] = g
                             new_game = b"\x00"
                             new_game += player.name.encode()
@@ -71,29 +43,38 @@ class Server(Thread):
                             name:bytes = message[1:]
                             if name in self.games:
                                 self.games[name].player_join(player)
-                                game_start = b"\x01"
-                                game_start += name.encode()
 
                                 
                             pass
                         case 2: # SET PLAYER NAME
                             self.players[address[0]].name = message[1:].decode()
                             pass
-                        case 0: # CREATE GAME
+                        case 3: # START GAME
+                            game_start = b"\x01"
+                            game_start += player.name.encode()
+
+                            if message[1]: #PLAY VS AI
+                                AI = Player(None,"AI")
+                                self.games[player.name].player_join(AI)
+                            else: #PVP
+
+                            pass
+                        case 4 #PLACE BOAT
                             pass
             except socket.timeout:
                 pass
     def send(self, o,players):
         for p in players:
-            self.server.send(o,p.id)
+            if p.name != "AI":
+                self.server.send(o,p.id)
     def send_all(self, o : bytes):
         for addr,player in self.players.items():
-            self.server.sendto(o,player.ip)
+            if p.name != "AI":
+                self.server.sendto(o,player.ip)
 
-serv = Server()
 
 def main():
-    global serv
+    serv = Server()
     serv.start()
     s = ""
     try:

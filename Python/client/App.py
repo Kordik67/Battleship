@@ -62,7 +62,7 @@ class App:
             self.text.place(width=100, height=50, relx=0.0, rely=0.0, anchor='center')
             #self.text.place(x=50+label.winfo_width(), y=150, width=150, height=50)
 
-            startButton = Button(root, text="Start", command=self.callback)
+            startButton = Button(root, text="Start", command=self.register_new_user)
             startButton.place(x=100, y=200, width=75, height=50)
         else:
             # The user is known, connect him directly
@@ -70,7 +70,7 @@ class App:
             self.menu(response[0].decode())
         self.serv.start()
         
-    def callback(self):
+    def register_new_user(self):
         toSend = b"\x02"
         self.username = self.text.get(0.1, END)[:-1]
         toSend += self.username.encode()
@@ -126,6 +126,7 @@ class App:
         # List of players in the room
         self.players = Listbox(self.root, font=("Arial", 20), width=30, height=10)
         self.players.place(relx=0.5, rely=0.5, anchor='center')
+        self.add_player(self.username)
 
         # Play against AI
         button_IA = Button(self.root, text="Play against AI", font=("Arial", 14), command= lambda: self.add_player("AI"))
@@ -136,7 +137,11 @@ class App:
         self.button_start.place(relx=0.6, rely=0.95, anchor="center")
 
     def start_game(self):
-        pass
+        start = b"\x03"
+        if "AI" in self.players:
+            start+=b"\x01"
+        else:
+            start+=b"\x00"
     
     def add_player(self, username):
         self.players.insert(END, username)
