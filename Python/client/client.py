@@ -10,9 +10,10 @@ port = 4977
   
 
 def main() -> int:
-    root = Tk()
-    app = App(root, server, host, port)
-    root.mainloop()
+    app = App(server, host, port)
+    app.start()
+    input()
+
     app.serv.stop = True
     return 0
 
