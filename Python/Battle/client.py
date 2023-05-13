@@ -1,18 +1,19 @@
+import socket
 from ursina import *
 from GameGrid import *
 
+server = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+host = "network.freeboxos.fr"
+port = 4977
 
-
-def start():
+def main():
     window.borderless = False
     camera.orthographic = True
     camera.fov = 15
-    camera.position = (5, 5)
-    grille = GameGrid()
-    #grid = Entity(scale=(10,10), model=Grid(10, 10),color=color.orange,position = (4.5,4.5))
-
+    camera.position = (5,5)
+    grid = GameGrid()
 
 if __name__ == "__main__":
     app = Ursina()
-    start()
+    main()
     app.run()

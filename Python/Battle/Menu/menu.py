@@ -1,28 +1,22 @@
 from ursina import *
 from ursina.prefabs.dropdown_menu import DropdownMenu, DropdownMenuButton
+from MenuButton import MenuButton
+from OptionsMenu import OptionsMenu
 
 app = Ursina()
 
 window.fullscreen = True
-
-class MenuButton(Button):
-    def __init__(self, text='', **kwargs):
-        super().__init__(
-            text,
-            scale=(.25, .075),
-            highlight_color=color.azure,
-            **kwargs
-        )
-
-        for key, value in kwargs.items():
-            setattr(self, key, value)
+background_music = Audio("../assets/background_music.mp3", autoplay=True, loop=True)
 
 button_spacing = .075 * 1.2
 menu_parent = Entity(parent=camera.ui, y=.15)
 main_menu = Entity(parent=menu_parent)
 load_menu = Entity(parent=menu_parent)
-options_menu = Entity(parent=menu_parent)
+#options_menu = Entity(parent=menu_parent)
+options_menu = OptionsMenu(menu_parent, background_music, Animator({ 'main_menu': main_menu }), button_spacing)
 game_menu = Entity(parent=menu_parent)
+
+background = Entity(parent=menu_parent, model='quad', texture='shore', scale=(camera.aspect_ratio,1), color=color.white, z=1, world_y=0)
 
 state_handler = Animator({
     'main_menu': main_menu,
@@ -54,6 +48,7 @@ for i in range(3):
 load_menu.back_button = MenuButton(parent=load_menu, text='Retour', y=((-i-2) * button_spacing), on_click=Func(setattr, state_handler, 'state', 'main_menu'))
 
 # options menu content
+"""
 volume_slider = Slider(0, 1, default=Audio.volume_multiplier, step=.1, text="Volume :", parent=options_menu, x=-.25)
 def set_volume_multiplier():
     #Audio.volume_multiplier = volume_slider.value
@@ -67,6 +62,7 @@ options_back = MenuButton(parent=options_menu, text='Retour', x=-.25, origin_x=-
 
 for i, e in enumerate((volume_slider, options_back)):
     e.y = -i * button_spacing
+"""
 
 # Ajouter la liste des joueurs
 player_list = ["Kordik"]
@@ -77,7 +73,15 @@ player2 = Text(text='Joueur2', scale=1.5, origin=(0, 1), y=-0.15, parent=game_me
 def start():
     #from GameGrid import GameGrid
     #from ship_container import ShipContainer
+    import sys
+    import os
+    script_dir = os.path.dirname(__file__)
+    module_dir = os.path.join(script_dir, '..')
+    sys.path.append(module_dir)
+
     import main
+    menu_parent.enabled = False    
+    main.start()
     
 # Ajouter le bouton pour démarrer la partie
 start_game_button = MenuButton(text='Démarrer la partie', parent=game_menu, y=-0.45, enabled=False, on_click=start)
@@ -151,8 +155,5 @@ for menu in (main_menu, load_menu, options_menu, game_menu):
                 e.text_entity.animate('alpha', 1, delay=i*.05, duration=.1)
 
     menu.on_enable = animate_in_menu
-
-background = Entity(parent=menu_parent, model='quad', texture='shore', scale=(camera.aspect_ratio,1), color=color.white, z=1, world_y=0)
-background_music = Audio("assets/background_music.mp3", autoplay=True, loop=True)
 
 app.run()
