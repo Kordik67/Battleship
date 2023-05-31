@@ -1,5 +1,5 @@
-from ursina import *
-from MenuButton import MenuButton
+from ursina import Entity, Slider, Audio, Func
+from .MenuButton import MenuButton
 
 class OptionsMenu(Entity):
     def __init__(self, parent, background_music, state_handler, button_spacing):

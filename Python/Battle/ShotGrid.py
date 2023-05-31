@@ -1,9 +1,12 @@
 from ursina import *
+import numpy as np
 
 class ShotGrid(Entity):
-    def __init__(self,**kwargs):
+    def __init__(self,cli,**kwargs):
         Entity.__init__(self, position=(0,0,0), origin=(0,0,0),scale=(1,1),color=color.black50)
         self.grid = Entity(parent = self, scale=(10,10), model=Grid(10, 10),color=color.orange,position = (4.5,4.5))
+        self.client = cli
+        self.hit_cells = np.zeros(shape=(10,10),dtype=int)
         self.cells = \
         [
             [
@@ -21,16 +24,30 @@ class ShotGrid(Entity):
         self.shot_boutton.on_click = self.shot
         self.target = None
     
-    def set_target_square(self,cell):
+    def set_target_square(self,co):
+        x,y = co
+        cell = self.cells[x][y]
         if self.target != None:
             self.target.color = color.white33
         self.target = cell
+        self.target_co = co
         self.target.color = color.white50
         
     def shot(self):
-        Animation('assets/explosion.gif', loop=False,parent = self.target)
+        self.client.shoot_at(self.target_co)
+        self.hit_cells[self.target_co] = 1
         pass
     
+    def shot_responce(self,hit):
+        if hit:
+            self.target.color = color.red
+            Animation('assets/explosion.gif', loop=False,parent = self.target, z=-0.1)
+        else:
+            self.target.color = color.blue
+            Animation('assets/eau.gif', loop=False,parent = self.target, z=-0.1)
+        
+        self.target = None
+
     def update(self):
         if self.target != None:
             self.shot_boutton.enabled = True
@@ -44,5 +61,5 @@ class ShotGrid(Entity):
                 pos = round(mouse.world_point)
                 x,y = int(pos.x) , int(pos.y)
                 #print(pos)
-                if x in range(10) and y in range(10):
-                    self.set_target_square( self.cells[x][y] ) 
+                if x in range(10) and y in range(10) and not self.hit_cells[x,y]:
+                    self.set_target_square( (x,y) )

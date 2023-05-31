@@ -2,7 +2,9 @@ import socket
 import time
 from threading import Thread
 import numpy as np
-from BattleShipCore import *
+from Player import *
+from Ship import *
+from Game import Game
 
 class Server(Thread):
 
@@ -34,11 +36,12 @@ class Server(Thread):
                     player = self.players[address[0]]
                     match message[0]:
                         case 0: # CREATE GAME
-                            g = Game(player,12,12,self)
+                            g = Game(player,10,10,self)
                             self.games_waiting[player.name] = g
                             new_game = b"\x00"
                             new_game += player.name.encode()
                             self.send_all(new_game)
+                            player.game = g
                             pass
                         case 1: # JOIN GAME
                             name:bytes = message[1:]
@@ -51,11 +54,13 @@ class Server(Thread):
                             self.players[address[0]].name = message[1:].decode()
                             pass
                         case 3: # START GAME
-                            start_game = b"\x01\x0a\x0a"
+                            start_game = b"\x01"
 
                             if message[1]: #PLAY VS AI
                                 AI = Player(None,"AI")
-                                self.games_waiting[player.name].player_join(AI)
+                                g = self.games_waiting[player.name]
+                                g.player_join(AI)
+                                g.place_random_boat(1)
                             else: #PVP
                                 pass
                             self.send(start_game,self.games_waiting[player.name].players)
@@ -64,15 +69,26 @@ class Server(Thread):
                             del self.games_waiting[player.name]
 
                         case 4: #PLACE BOAT
-                            pass
+                            g = self.games_runing[player.name]
+                            msg = message[1:]
+                            for i in range(len(msg)//4):
+                                x,y,dir_vec,lenght = msg[i*4 : i*4+4]
+                                print(x,y,dir_vec,lenght)
+                                g.place_boat(player, (x,y) ,VECTOR[dir_vec],lenght)
                         case 5: #REQUEST GAMES
-                            for k,v in self.games_waiting:
-                                self.send(b"\x03\x01%c%s" % (len(v.name),v.name), players)
-                            for k,v in self.games_runing:
-                                self.send(b"\x03\x00%c%s" % (len(v.name),v.name), players)
+                            pack = b"\x03"
+                            pack += b"\x00".join([name.encode() for name in self.games_waiting.keys()])
+                            pack += b"\x01"
+                            pack += b"\x00".join([name.encode() for name in self.games_runing.keys()])
+                            self.send(pack,[player])
+                        case 6 : # SHOOT
+                            x,y = message[1:3]
+                            player.game.shoot(player,(x,y))
                             pass
             except socket.timeout:
                 pass
+            except socket.error as err:
+                print("socket.errror",err)
     def send(self, o,players):
         for p in players:
             if p.name != "AI":
@@ -90,7 +106,12 @@ def main():
     try:
         while s != "stop":
             s=input(":")
+            print("player")
             print(serv.players)
+            for k,v in serv.games_waiting.items():
+                print(k,'\n', v)
+            for k,v in serv.games_runing.items():
+                print(k,'\n',v)
     except:
         pass
     serv.stop = True

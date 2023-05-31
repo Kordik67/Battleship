@@ -1,4 +1,4 @@
-from ursina import *
+from ursina import Button, color
 
 class MenuButton(Button):
     def __init__(self, text='', **kwargs):
