@@ -1,7 +1,7 @@
 import socket
 from ursina import *
 from threading import Thread
-
+from GameGrid import GameGrid
 
 class Client(Thread):
     def __init__(self, main_menu=None, game_grid=None, shoot_grid=None):
@@ -12,8 +12,8 @@ class Client(Thread):
 
         self.server = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.server.settimeout(2)
-        # self.host = "network.freeboxos.fr"
-        self.host = "localhost"
+        self.host = "network.freeboxos.fr"
+        #self.host = "localhost"
         self.port = 4977
         self.send(b'Connected')
         msg, addr = self.server.recvfrom(1024)
@@ -49,6 +49,9 @@ class Client(Thread):
     def shoot_at(self, co):
         self.send(b"\x06%c%c" % co)
 
+    def delete_game(self):
+        self.send(b"\x07")
+
     def run(self) -> None:
         while not self.stop:
             try:
@@ -65,15 +68,15 @@ class Client(Thread):
                         # y = msg[2]
                         # self.battle = BattleShip(x,y)
                         # self.battle.start()
-                        pass
+                        self.game_grid = GameGrid(self)
                     case 2:  # GAME ENDED
                         # name = msg[1:]
                         pass
                     case 3:  # GAME ROOM UPDATE
                         # Format : "\x03nom1\x00nom2\x00nom3\x01nom1\x00"
                         waiting, playing = msg[1:].split(b'\x01')
-                        waiting_rooms = waiting.split(b'\x00')
-                        playing_rooms = playing.split(b'\x00')
+                        waiting_rooms = [s.decode() for s in waiting.split(b'\x00')]
+                        playing_rooms = [s.decode() for s in playing.split(b'\x00')]
 
                         print("waiting :", waiting_rooms)
                         print("Playing :", playing_rooms)

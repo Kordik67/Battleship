@@ -75,7 +75,7 @@ class MainMenu(Entity):
         self.add_ai_button = MenuButton(text='Ajouter une IA', parent=self.game_menu, y=-0.35, on_click=self.add_ai_player)
         
         # Ajouter le bouton pour revenir au menu principal
-        back_button = MenuButton(text='Retour', parent=self.game_menu, y=-0.55, on_click=Func(setattr, state_handler, 'state', 'main_menu'))
+        back_button = MenuButton(text='Retour', parent=self.game_menu, y=-0.55, on_click=Sequence(Func(setattr, state_handler, 'state', 'main_menu'), Func(self.client.delete_game)))
 
 
         # animate the buttons in nicely when changing menu
@@ -94,6 +94,8 @@ class MainMenu(Entity):
                         e.text_entity.animate('alpha', 1, delay=i*.05, duration=.1)
 
         menu.on_enable = animate_in_menu
+        
+        self.client.requestGames()
 
     def add_player(self, player_name):
         if len(self.player_list) < 2:
@@ -140,13 +142,15 @@ class MainMenu(Entity):
         self.start_callback(self.client)
         self.client.startGame("IA" in self.player_list)
 
+    def join(self, room):
+        self.client.joinGame(room)
+
     def create_rooms_list(self, waiting_rooms, playing_rooms):
         for i in range(len(waiting_rooms)):
-            MenuButton(parent=self.load_menu, text=waiting_rooms[i], y=-i * self.button_spacing, on_click=self.start_game)
+            MenuButton(parent=self.load_menu, text=waiting_rooms[i], y=-i * self.button_spacing, on_click=Func(self.join, waiting_rooms[i]))
 
         for i in range(len(playing_rooms)):
-            MenuButton(parent=self.game_menu, text=waiting_rooms[i], y=-i * self.button_spacing, on_click=self.start_game)
-
+            MenuButton(parent=self.game_menu, text=playing_rooms[i], y=-i * self.button_spacing, on_click=Func(self.join, playing_rooms[i]))
 
     def stop(self):
         application.quit()

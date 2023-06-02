@@ -91,7 +91,9 @@ class Server(Thread):
                         case 6:  # SHOOT
                             x, y = message[1:3]
                             player.game.shoot(player, (x, y))
-                            pass
+                        case 7: # GAME DELETE
+                            del self.games_waiting[player.name]
+                            player.game = None
             except socket.timeout:
                 pass
             except socket.error as err:
